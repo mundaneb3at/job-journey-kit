@@ -33,6 +33,18 @@ progress.
 7. Move rows you will act on into `OPPORTUNITY-TRACKER.md` Tier B, verify each is live, promote to
    Tier A, build the package, submit it yourself, log the row.
 
+## Then, once a posting is verified live (v2)
+
+Four prompts take one live posting from "looks interesting" to "prepared for the interview". Run
+them in order; each one's output is the next one's input.
+
+| Run | Prompt | What it gives you |
+|---|---|---|
+| after the sweep | `prompts/evaluate-posting.md` | what the employer is actually buying, which requirements you can prove, the hard filters quoted, and whether the pay figure means anything |
+| decided to apply | `prompts/tailor-application.md` | a tailored résumé, torn apart by a second assistant that did not write it, then audited claim by claim against your ledgers |
+| same application | `prompts/cover-letter.md` | one page, every employer detail verified on the employer's own pages |
+| stage booked | `prompts/interview-prep.md` | likely questions, STAR answers grounded in ledger rows, and the consistency brief you read ten minutes before the call |
+
 ## What is in here
 
 ```
@@ -46,9 +58,32 @@ templates/
 prompts/
   evidence-sweep.md              the prompt that fills AMMO-LEDGER.md from your own files
   web-sweep.md                   the prompt for a web search of postings, with the verbatim-filter rule
+  evaluate-posting.md            archetype, requirement→evidence matrix, hard filters, pay reliability
+  tailor-application.md          tailor, then a fresh-context reviewer, then the grounding audit
+  cover-letter.md                one page, every employer claim verified at source
+  interview-prep.md              likely questions, STAR from ledger rows, consistency brief
 tools/
   ats-sweep.mjs                  board-API liveness + eligibility sweep (Node 18+, zero deps)
+THIRD-PARTY.md                   what the v2 prompts learned from two MIT projects, and from where
+FOLD-PLAN-2026-09-04.md          the item-by-item record of that fold, including what was refused
 ```
+
+## v2 — what changed
+
+v1 covered finding roles and proving they are open. v2 adds the four prompts above: what to do with
+a posting once it is live. Three rules came with them and are now enforced throughout —
+**importance is decided from the posting before you look at yourself**, **a claim that is not in a
+ledger does not go in a draft**, and **the assistant that wrote the draft is not the one that
+reviews it**.
+
+Inspired by two MIT-licensed projects, read but never installed:
+[career-ops](https://github.com/career-ops-hq/career-ops) (archetype detection, the two-pass
+importance rule, the evidence-tier ladder, pay reliability) and
+[ai-job-search](https://github.com/MadsLorentzen/ai-job-search) (the drafter–reviewer loop, the
+factual grounding audit, the interview prep pack). Full attribution in `THIRD-PARTY.md`; what was
+deliberately *not* taken — and why, including their fit scores — is in `FOLD-PLAN-2026-09-04.md`.
+No code was copied and no dependency was added: the kit still needs nothing but Node 18+ for the
+sweep tool.
 
 ## Why these rules exist (each one cost someone something)
 
