@@ -72,3 +72,18 @@ rule that hard filters are quoted verbatim and never compressed into a percentag
 - **observable-job-agent** — https://github.com/jamwithai/observable-job-agent (read 2026-08-31).
   Its structured fit-score/gap-list shape was reviewed and deliberately not adopted, for the same
   reason as above: this kit does not produce fit percentages.
+
+---
+
+## v3 — sweep tool
+
+- Project: **open-jobs** — https://github.com/elliottdehn/open-jobs
+- License: CC0-1.0
+- Read: `backend/src/ats/ukg.ts` (request/response shape for the UKG board API)
+
+**Credited, not vendored**: `tools/ats-sweep.mjs`'s `ukg` adapter is a fresh implementation
+matching this file's own posting shape (same fields as every other adapter: id, title, location,
+isRemote, publishedAt, applyUrl, text, compensation). No file from open-jobs is copied; only the
+request shape (endpoint path, pagination params, response field names) came from reading their
+adapter. CC0-1.0 needs no attribution, but it's listed here for the same reason as the MIT entries
+above: so a reader can see where a non-obvious API shape came from.

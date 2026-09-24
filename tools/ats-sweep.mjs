@@ -17,7 +17,7 @@
  *   node ats-sweep.mjs --slugs more-slugs.json  sweep a discovered slug list
  *   node ats-sweep.mjs --all                    no filtering; dump every posting per board
  *
- * A slug file is JSON: [{"platform":"ashby","slug":"cohere"}, {"platform":"lever","slug":"acme"}]
+ * A slug file is JSON: [{"platform":"ashby","slug":"cohere"}, {"platform":"ukg","slug":"host:code:guid"}]
  * Needs Node 18+ (built-in fetch). No dependencies.
  *
  * EDIT THESE FOR YOURSELF: SLUGS, JUNIOR, REGION, NOT_REGION, EXCLUDE, STRENGTH_TERMS.
@@ -30,6 +30,7 @@ const UA = { "User-Agent": "Mozilla/5.0 (compatible; job-sweep/1.0)" };
 const SLUGS = [
   { platform: "ashby", slug: "cohere" },
   { platform: "ashby", slug: "1password" },
+  { platform: "lever", slug: "acme" },
 ];
 
 // Titles you can plausibly clear. Edit to your level.
@@ -113,6 +114,66 @@ const ADAPTERS = {
       workplaceType: j.remote || "", publishedAt: j.published_at || "", applyUrl: j.careers_url,
       text: (j.description || "") + "\n" + (j.requirements || ""), compensation: "",
     }));
+  },
+  // Ported from open-jobs (github.com/elliottdehn/open-jobs, backend/src/ats/ukg.ts, CC0-1.0) -
+  // credited in THIRD-PARTY.md, not vendored: the request shape came from their adapter; this is a
+  // fresh implementation matching this file's own posting shape. Slug = "<host>:<companyCode>:<boardGuid>";
+  // that triple can't be derived from a company name, only mined from a crawl corpus.
+  async ukg(slug) {
+    const bits = slug.split(":");
+    if (bits.length !== 3) return null;
+    const [host, code, guid] = bits;
+    const base = "https://" + host + "/" + code + "/JobBoard/" + guid;
+    const PAGE = 50, MAX = 4000;
+    const jobs = [], seen = new Set();
+    let total = Infinity;
+    for (let skip = 0; skip < Math.min(total, MAX); skip += PAGE) {
+      let r;
+      try {
+        r = await fetch(base + "/JobBoardView/LoadSearchResults", {
+          method: "POST",
+          headers: Object.assign({ "content-type": "application/json", accept: "application/json" }, UA),
+          body: JSON.stringify({
+            opportunitySearch: { Top: PAGE, Skip: skip, QueryString: "", OrderBy: [{ Value: "postedDateOpportunity", PropertyName: "PostedDate", Ascending: false }], Filters: [] },
+            matchCriteria: { PreferredJobs: [], Educations: [], LicenseAndCertifications: [], Skills: [], hasNoLicenses: false, SkippedSkills: [] },
+          }),
+        });
+      } catch { return skip === 0 ? null : jobs; }
+      if (!r.ok) return skip === 0 ? null : jobs;
+      let data;
+      try { data = await r.json(); } catch { return skip === 0 ? null : jobs; }
+      if (!Array.isArray(data.opportunities)) return skip === 0 ? null : jobs;
+      total = data.totalCount || 0;
+      for (const o of data.opportunities) {
+        if (!o.Id || !o.Title || seen.has(o.Id)) continue;
+        seen.add(o.Id);
+        const loc = (o.Locations || []).map(l => {
+          const a = l.Address || {};
+          return [a.City, a.State && (a.State.Code || a.State.Name), a.Country && a.Country.Code].filter(Boolean).join(", ") || l.LocalizedName || "";
+        }).filter(Boolean).slice(0, 4).join("; ");
+        jobs.push({
+          id: o.Id, title: o.Title, location: loc, secondary: "",
+          employmentType: o.FullTime === false ? "Part-time" : (o.FullTime ? "Full-time" : ""),
+          isRemote: /remote/i.test(loc || ""), workplaceType: "",
+          publishedAt: o.PostedDate || "",
+          applyUrl: base + "/OpportunityDetail?opportunityId=" + o.Id,
+          text: o.BriefDescription || "", compensation: "",
+        });
+      }
+      if ((data.opportunities.length || 0) < PAGE) break;
+    }
+    // The listing only carries a brief description; the full body lives on the detail page. These
+    // boards are one employer's, so this is a handful of requests, not thousands.
+    for (const j of jobs) {
+      try {
+        const dr = await fetch(j.applyUrl, { headers: UA });
+        if (!dr.ok) continue;
+        const html = await dr.text();
+        const m = html.match(/"Description":"((?:[^"\\]|\\.)*)"/);
+        if (m) { try { j.text = JSON.parse('"' + m[1] + '"'); } catch { /* keep brief text */ } }
+      } catch { /* keep brief text */ }
+    }
+    return jobs;
   },
 };
 

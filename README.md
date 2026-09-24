@@ -10,7 +10,7 @@ chat). No accounts, no keys, no dependencies beyond Node 18+ for the sweep tool.
 | Layer | File | The rule |
 |---|---|---|
 | **Ammunition** — what you can truthfully say about yourself | `AMMO-LEDGER.md` → `CLAIMS-EVIDENCE-LEDGER.md` → `resume.md` | A number reaches your resume only with an evidence row someone else could re-check. |
-| **Search** — finding postings and proving they are open | `slugs.json` + `tools/ats-sweep.mjs` → `VERIFY-LEDGER-<date>.md` | HTTP 200 is not evidence a job is open. Live = the employer's board API still returns it. Hard filters are quoted verbatim, never turned into a fit %. |
+| **Search** — finding postings and proving they are open | `slugs.json` + `tools/ats-sweep.mjs` → `sweep-<date>.md` (raw rows) → `VERIFY-LEDGER-<date>.md` (each row's liveness verdict) | HTTP 200 is not evidence a job is open. Live = the employer's board API still returns it. Hard filters are quoted verbatim, never turned into a fit %. |
 | **Findings** — where everything lands | `OPPORTUNITY-TRACKER.md` | One tracker. Every session ends with a dated Activity-log row. You click every submission yourself. |
 
 And the rule above all three: **if an application is built and unsent, the first thing your
@@ -50,11 +50,20 @@ them in order; each one's output is the next one's input.
 ```
 SKILL.md                         the method, written as instructions to an AI assistant
 README.md                        this file
+protocols/
+  SEARCH.md                      find a posting, prove it live, verdict it
+  RESUME.md                      one résumé for every send, producer → gate → blind recheck
+  LETTERS.md                     cover letters for a named posting, portal or email
+  OUTREACH.md                    cold messages to an employer with no live posting
+  GATES.md                       the decision tree every other protocol cites (G0–G9)
 templates/
   README-hub.md                  intent-routed hub for your search folder ("I want to apply now" → file)
   AMMO-LEDGER.md                 evidence bank schema + example rows
   CLAIMS-EVIDENCE-LEDGER.md      the resume-number gate
   OPPORTUNITY-TRACKER.md         tiers, skip register, activity log
+  letters/_example.md            a filled-out letter content file
+  outreach/_TEMPLATE.md          the starting shape for a cold message
+  resume-content.example.py      example content module for tools/make-resume.py
 prompts/
   evidence-sweep.md              the prompt that fills AMMO-LEDGER.md from your own files
   web-sweep.md                   the prompt for a web search of postings, with the verbatim-filter rule
@@ -64,9 +73,41 @@ prompts/
   interview-prep.md              likely questions, STAR from ledger rows, consistency brief
 tools/
   ats-sweep.mjs                  board-API liveness + eligibility sweep (Node 18+, zero deps)
+  make-resume.py verify-resume.py verify-template.py    résumé producer + gate (Python, optional)
+  make-letter.py verify-letter.py                       cover-letter producer + gate (Python, optional)
+  verify-outreach.py                                     cold-message gate (Python, optional)
 THIRD-PARTY.md                   what the v2 prompts learned from two MIT projects, and from where
 FOLD-PLAN-2026-09-04.md          the item-by-item record of that fold, including what was refused
 ```
+
+## v3 — four lane protocols
+
+v3 adds `protocols/` — four generic lane protocols (SEARCH, RESUME, LETTERS, OUTREACH) plus a
+shared decision tree (GATES) — and six optional Python tools that gate a résumé, a cover letter,
+and a cold-outreach message the same way `ats-sweep.mjs` already gates a posting. Every protocol
+follows the same shape: producer of record, rules with their reason, gate order, how to add the
+next one, and where it came from.
+
+| Lane | Protocol | Producer | Gate |
+|---|---|---|---|
+| Find a posting | `protocols/SEARCH.md` | `node tools/ats-sweep.mjs --slugs slugs.json` | `protocols/GATES.md` G0–G9 |
+| One résumé | `protocols/RESUME.md` | `python tools/make-resume.py --version vN --date <date> --render` | `python tools/verify-resume.py <docx>` |
+| A cover letter | `protocols/LETTERS.md` | `python tools/make-letter.py <target>` | `python tools/verify-letter.py --only <target>` |
+| Cold outreach | `protocols/OUTREACH.md` | you write `outreach/<target>.md` yourself | `python tools/verify-outreach.py --only <target>` |
+
+Dependencies stay honest: the sweep still needs only Node 18+. The four Python gates are optional
+and need Python 3.10+, `python-docx`, PyMuPDF, and Pillow. Three steps use Microsoft Word through
+`pywin32` on Windows: the letter page count (`verify-letter.py`, skip with `--no-page` and check by
+eye), the outreach spell-check (`verify-outreach.py`, skip with `--no-spell`), and the résumé render
+(`make-resume.py --render`; elsewhere export the `.docx` to PDF yourself and pass it to
+`verify-resume.py --pdf <file>`). Skip `protocols/` and the Python tools entirely and the kit still works exactly
+as it did in v2. One thing to expect: run a gate on a template you have not filled in yet and it
+fails on the placeholder text itself (the angle-bracket prompts contain words and digits the rules
+forbid) — that is the gate working, not breaking; fill the file, then run it.
+
+Why these rules exist, same as v2's list above: a typo went out in a cold email because nothing
+checked spelling before Send; a hand-edited output file passed every visual check and failed every
+gate, because editing it by hand is exactly the step that takes it outside every gate that exists.
 
 ## v2 — what changed
 

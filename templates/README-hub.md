@@ -6,6 +6,14 @@ Routed by **what you want to do**, not by folder. Last substantive update: **<da
 → `OPPORTUNITY-TRACKER.md` Tier A. `ready` means the package exists and only your click is missing.
 **If anything is `ready`, do that before reading further.**
 
+## The four lanes (v3) — each has its own protocol, producer and gate
+| lane | open | produce | check |
+|---|---|---|---|
+| find a posting, prove it live, verdict it | `protocols/SEARCH.md` | `node tools/ats-sweep.mjs --slugs slugs.json` | `protocols/GATES.md`, first failing gate names the verdict |
+| the one résumé every send uses | `protocols/RESUME.md` | `python tools/make-resume.py --version vN --date <date> --render` + `resume-content.py` | `python tools/verify-resume.py <docx>` |
+| a cover letter for a named posting | `protocols/LETTERS.md` | `python tools/make-letter.py <target>` reading `letters/<target>.md` | `python tools/verify-letter.py --only <target>` |
+| a cold message to an employer with no posting | `protocols/OUTREACH.md` | `outreach/<target>.md` from `templates/outreach/_TEMPLATE.md` | `python tools/verify-outreach.py --only <target>` |
+
 ## "What's actually open? / is this posting still live?"
 → `node tools/ats-sweep.mjs --selfcheck` (must print `SELFCHECK OK`), then
 `node tools/ats-sweep.mjs --slugs slugs.json` → `sweep-<date>.md`.
