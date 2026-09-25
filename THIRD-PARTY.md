@@ -1,7 +1,7 @@
 # Third-party attributions
 
-This kit is CC0 1.0. Some of the method in `prompts/` was learned from two MIT-licensed projects.
-MIT text cannot be relicensed as CC0, so anything taken from them is listed here with its origin.
+This kit is MIT-licensed. Some of the method in `prompts/` was learned from two MIT-licensed projects.
+Anything taken from the two upstream MIT projects is listed here with its origin, with their notices preserved.
 
 Nothing in this kit vendors upstream **code**. No file from either project is copied wholesale, no
 dependency of either project is required, and neither project's setup was run to produce this kit —

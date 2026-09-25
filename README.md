@@ -145,4 +145,4 @@ Everything specific to one person lives in three places: the regexes at the top 
 `tools/ats-sweep.mjs` (level, region, strengths), the example rows in `templates/`, and the
 profile block in `prompts/web-sweep.md`. Change those; keep the rules.
 
-License: CC0 — copy, edit, share.
+License: MIT — see `LICENSE`.
